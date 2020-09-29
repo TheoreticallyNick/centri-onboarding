@@ -31,6 +31,7 @@ thingType = 'LOGI-1' #thingType should be the model number (ie )
 defaultPolicyName = 'default-logi-policy'
 sim = '8944501705192074069'
 serial = '1'
+dist_id = '1'
 #thingGroup = 'Ford_Propane'
 #thingGroupArn = 'arn:aws:iot:us-east-2:354778082397:thinggroup/Ford_Propane'
 
@@ -111,11 +112,11 @@ def createQRcode():
 def updateDynamoDB():
     dynamo = boto3.resource('dynamodb', region_name='us-east-1')
     table1 = dynamo.Table('logi-status')
-    table1.put_item(Item={'id': thingName, 'serial': serial, 'sim': sim})
+    table1.put_item(Item={'id': thingName, 'serial': serial, 'sim': sim, 'dist_id': dist_id})
 
 def updateShadow():
     client_shadow = boto3.client('iot-data', region_name='us-east-1')
-    shadow = {'state': {'reported': { 'id': thingName, 'serial': serial, 'sim': sim, 'user_id': 'null'}}}
+    shadow = {'state': {'reported': { 'id': thingName, 'serial': serial, 'sim': sim, 'user_id': 'null', 'dist_id': dist_id}}}
     shadow_bytes = json.dumps(shadow).encode('utf-8')
     response = client_shadow.update_thing_shadow(thingName=thingName, shadowName='logi-1-shadow', payload=shadow_bytes)
 
