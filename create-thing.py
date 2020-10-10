@@ -14,20 +14,12 @@ import uuid
 # 3) Updating the "thing" shadow
 # 4) Updating the dynamoDB database for the new device
 
-# TODO:
-# 1) Upload the certs, id's, and keys to the device - need to automate Root-CA file
-# 2) DONE - Run a test publish sequence with AWS
-# 3) DONE - Print the label and place it on the device
-# 4) DONE - Insert new entry in device table that links SIM, thingName, serial
-# 5) DONE - Create device entry in DynamoDB device status series
-# 6) DONE - Update the device shadow prior to updating the dynamodb table
-
 # Variables that will be assigned during manufacturing
 
 thingArn = ''
 thingId = '' # Assigned by AWS as a v4 uuid
-thingName = str(uuid.uuid4()).replace('-','') # thingName is going to be the last 12 digits of the uuid
-thingType = 'LOGI-1' #thingType should be the model number (ie )
+thingName = str(uuid.uuid4()).replace('-','') # uuid
+thingType = 'LOGI-1' # model 
 defaultPolicyName = 'default-logi-policy'
 sim = '8944501705192074069'
 serial = '1'
