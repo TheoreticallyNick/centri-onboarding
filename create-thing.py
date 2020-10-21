@@ -21,7 +21,7 @@ thingId = '' # Assigned by AWS as a v4 uuid
 thingName = str(uuid.uuid4()).replace('-','') # uuid
 thingType = 'LOGI-1' # model 
 defaultPolicyName = 'default-logi-policy'
-sim = '8944501705192074069'
+sim = '99' # Enter IMEI Sim Card value
 serial = '1'
 dist_id = '1'
 #thingGroup = 'Ford_Propane'
@@ -121,8 +121,8 @@ createCertificate()
 # 3. generate QR code
 createQRcode()
 # 4. update device shadow
-updateShadow()
+#updateShadow()
 # 5. update dynamoDB table
-updateDynamoDB()
+#updateDynamoDB()
 
 
