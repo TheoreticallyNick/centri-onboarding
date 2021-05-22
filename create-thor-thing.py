@@ -7,23 +7,33 @@ import qrcode
 from PIL import Image  
 import PIL
 import uuid
+import decimal
+import datetime
+from decimal import Decimal
 
 # The purpose of this script is to onboard devices during the manufacturing process. This involves:
-# 1) Creating a "thing" in a AWS IoT
-# 2) Creating certificates for the "thing" to allow TCP access to the MQTT broker
-# 3) Updating the "thing" shadow
+# 1) Creating a 'thing' in a AWS IoT
+# 2) Creating certificates for the 'thing' to allow TCP access to the MQTT broker
+# 3) Updating the 'thing' shadow
 # 4) Updating the dynamoDB database for the new device
 
+### UPDATE THE FOLLOWING VARIABLES ###
 # Variables that will be assigned during manufacturing
 
 thingArn = ''
 thingId = '' # Assigned by AWS as a v4 uuid
-thingName = str(uuid.uuid4()).replace('-','') # uuid
-thingType = 'LOGI-1' # model 
-defaultPolicyName = 'default-logi-policy'
-sim = '99' # Enter IMEI Sim Card value
+thingName = str(uuid.uuid4()) # uuid
+thingType = 'THOR-1' # model 
+defaultPolicyName = 'default-thor-policy'
+imei = '99' # Enter IMEI Sim Card value
+sim = '99' # Enter Sim Card ID value
 serial = '1'
 dist_id = '1'
+PK = 'DEV#' + thingName
+SK = '#STATUS#' + thingName
+pubTopic = 'thor1/device/' + thingName
+mqtt_schema = '1.0'
+current_time = (datetime.datetime.now()).isoformat()
 #thingGroup = 'Ford_Propane'
 #thingGroupArn = 'arn:aws:iot:us-east-2:354778082397:thinggroup/Ford_Propane'
 
@@ -103,14 +113,38 @@ def createQRcode():
 
 def updateDynamoDB():
     dynamo = boto3.resource('dynamodb', region_name='us-east-1')
-    table1 = dynamo.Table('logi-status')
-    table1.put_item(Item={'id': thingName, 'serial': serial, 'sim': sim, 'dist_id': dist_id})
+    table1 = dynamo.Table('Thor_Main')
+    table1.put_item(Item={
+        'PK': PK, 
+        'SK': SK, 
+        'DeviceAuth': '298764',
+        'BirthDate': current_time,
+        'CycleCount': 0,
+        'DeviceCity': 'null',
+        'DeviceID': thingName,
+        'DeviceState': 'null',
+        'DeviceStreet': 'null',
+        'DeviceZip': 'null',
+        'ErrorLog': 'null',
+        'Version': '2.0,1.0,1.0',
+        'IMEI': imei,
+        'LTE_SignalQual': 'null',
+        'Serial': serial,
+        'SIM': sim,
+        'DeviceStatus': '0',
+        'BLE_Status': 'null',
+        'Provider': 'null',
+        'MQTT_Schema': mqtt_schema,
+        'DeviceLevel': 'null',
+        'DateTimeIso': 'null',
+        })
 
 def updateShadow():
+    
     client_shadow = boto3.client('iot-data', region_name='us-east-1')
-    shadow = {'state': {'reported': { 'id': thingName, 'serial': serial, 'sim': sim, 'user_id': 'null', 'dist_id': dist_id}}}
+    shadow = {'state': {'reported': { 'topic': pubTopic, 'status': '0', 'device_id': thingName, 'mqtt_schema': mqtt_schema }}}
     shadow_bytes = json.dumps(shadow).encode('utf-8')
-    response = client_shadow.update_thing_shadow(thingName=thingName, shadowName='logi-1-shadow', payload=shadow_bytes)
+    response = client_shadow.update_thing_shadow(thingName=thingName, payload=shadow_bytes)
 
 
 thingClient = boto3.client('iot', region_name='us-east-1')
@@ -121,8 +155,8 @@ createCertificate()
 # 3. generate QR code
 createQRcode()
 # 4. update device shadow
-#updateShadow()
+updateShadow()
 # 5. update dynamoDB table
-#updateDynamoDB()
+updateDynamoDB()
 
 
