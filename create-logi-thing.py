@@ -10,6 +10,7 @@ import uuid
 import decimal
 import datetime
 from decimal import Decimal
+from random import randint
 
 # The purpose of this script is to onboard devices during the manufacturing process. This involves:
 # 1) Creating a 'thing' in a AWS IoT
@@ -35,6 +36,7 @@ pubTopic = 'logi2/device/' + thingName
 mqtt_schema = '2.0'
 pubSchedule = '0615'
 current_time = (datetime.datetime.now()).isoformat()
+deviceAuth = randint(100000, 999999)
 #thingGroup = 'Ford_Propane'
 #thingGroupArn = 'arn:aws:iot:us-east-2:354778082397:thinggroup/Ford_Propane'
 
@@ -117,44 +119,43 @@ def updateDynamoDB():
     table1 = dynamo.Table('Centri_Main')
     table1.put_item(Item={
         'PK': PK, 
-        'SK': SK, 
-        'DeviceAuth': '298764',
+        'SK': SK,
+        'Altitude': 'null',
         'BatteryVolts': 'null',
         'BirthDate': current_time,
+        'BLE_Status': 'null',
+        'ChargerStatus': 'null',
         'CycleCount': 0,
+        'DailyUsage': 'null',
+        'DateTimeIso': 'null',
+        'DeviceAuth': deviceAuth,
         'DeviceCity': 'null',
         'DeviceID': thingName,
+        'DeviceLevel': 'null',
         'DeviceState': 'null',
+        'DeviceStatus': '0',
         'DeviceStreet': 'null',
         'DeviceZip': 'null',
         'ErrorLog': 'null',
-        'Version': '2.0,1.0,1.0',
+        'FillDate': 'null',
+        'GPS_SignalQual': 'null',
         'IMEI': imei,
         'Latitude': 'null',
         'Longitude': 'null',
-        'Altitude': 'null',
-        'GPS_SignalQual': 'null',
-        'PubSchedule': '0615',
-        'FillDate': 'null',
-        'DailyUsage': 'null',
         'LTE_SignalQual': 'null',
+        'MQTT_Schema': mqtt_schema,
+        'Provider': 'Ford Propane',
         'Serial': serial,
         'SIM': sim,
-        'DeviceStatus': '0',
         'SolarVolts': 'null',
-        'BLE_Status': 'null',
-        'ChargerStatus': 'null',
-        'Provider': 'Ford Propane',
-        'MQTT_Schema': mqtt_schema,
-        'DeviceLevel': 'null',
         'TemperatureC': 'null',
-        'DateTimeIso': 'null',
+        'Version': '2.0,1.0,1.0'
         })
 
 def updateShadow():
     
     client_shadow = boto3.client('iot-data', region_name='us-east-1')
-    shadow = {'state': {'reported': { 'topic': pubTopic, 'status': '0', 'device_id': thingName, 'mqtt_schema': mqtt_schema, 'publish_schedule': pubSchedule}}}
+    shadow = {'state': {'reported': { 'topic': pubTopic, 'status': '0', 'device_id': thingName, 'mqtt_schema': mqtt_schema, 'device_auth': deviceAuth}}}
     shadow_bytes = json.dumps(shadow).encode('utf-8')
     response = client_shadow.update_thing_shadow(thingName=thingName, payload=shadow_bytes)
 
