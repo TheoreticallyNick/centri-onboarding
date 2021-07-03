@@ -31,7 +31,7 @@ sim = '99' # Enter Sim Card ID value
 serial = '1'
 dist_id = '1'
 PK = 'DEV#' + thingName
-SK = '#STATUS#' + thingName
+SK = 'STATUS#' + thingName
 pubTopic = 'logi2/device/' + thingName
 mqtt_schema = '2.0'
 pubSchedule = '0615'
@@ -126,7 +126,7 @@ def updateDynamoDB():
         'BLE_Status': 'null',
         'ChargerStatus': 'null',
         'CycleCount': 0,
-        'DailyUsage': 'null',
+        'DailyUsage': 0,
         'DateTimeIso': 'null',
         'DeviceAuth': deviceAuth,
         'DeviceCity': 'null',
