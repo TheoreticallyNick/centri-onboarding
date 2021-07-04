@@ -1,14 +1,20 @@
-Steps to run a job on IoT device
+# AWS IoT Jobs
+AWS IoT Jobs can be used to define a set of remote operations that are sent to and executed on one or more devices connected to AWS IoT.
+The primary purpose of jobs is to notify devices of a software or firmware update. When sending code to devices, the best practice is to sign the code file. This allows devices to detect if the code has been modified in transit. AWS IoT currently supports code signing in the AWS CLI.
+The following instructions are the steps that need to be taken to run a job on an IoT device
+NOTE: the items in *italics* need to be custom to the device or the job being input
 
 ## TODO ##
 - Specify the jobs document standard
 - Specify the clientToken standard
-- Specify each requests and the ID's we need to use
+- Specify each requests timeout that we want to use
 
 ## Start of Jobs Process ## 
-This is the start of the Jobs process where we can send commands to the device from the cloud on an unsynchronized basis.
+Before you create a job, you must create a job document. If you are using code signing for AWS IoT, you must upload your job document to a versioned Amazon S3 bucket.
+Your job document can contain a presigned Amazon S3 URL that points to your code file (or other file). Presigned Amazon S3 URLs are valid for a limited amount of time and so are not generated until a device requests a job document.
 
-1. Job is uploaded with instruction json file with the associated **deviceID** of which devices receive the uploaded file.
+1. Command instructions are written a JSON file and uploaded to the S3 bucket. This is the "Jobs" document.
+    Then, a "job" is created in AWS IoT and associated with the *deviceID* of the devices that will receive the job.
     The job is now marked as "Queued" in the cloud. 
     A job file is a JSON file that doesn't require any specific format and can have custom value pairs that we define.
     For example, the JOB file can look like this: 
@@ -19,24 +25,22 @@ This is the start of the Jobs process where we can send commands to the device f
     }
     ```
 
-2. Device connects to the broker
-
-3. Publishes data to "logi2/device/**deviceID**"
+2. Connect device to AWS IoT Core MQTT broker
 
 ## Option 1 -- GetPendingJobExecutions 
 ### info: https://docs.aws.amazon.com/iot/latest/developerguide/jobs-mqtt-api.html#mqtt-getpendingjobexecutions
 This is our first option to view the pending jobs in the cloud that the device needs to execute on.
 
-4. Device subscribes to "$aws/things/**deviceID**/jobs/get/accepted" and "$aws/things/**deviceID**/jobs/get/rejected"
+4. Device subscribes to "$aws/things/*deviceID*/jobs/get/accepted" and "$aws/things/*deviceID*/jobs/get/rejected"
 
-5. Device publishes message to "$aws/things/**deviceID**/jobs/get", the request should look like this: 
+5. Device publishes message to "$aws/things/*deviceID*/jobs/get", the request should look like this: 
 ```
     { 
     "clientToken": "string" // Optional. A client token used to correlate requests and responses. Enter an arbitrary value here and it is reflected in the response.
     }
 ```
 
-6. AWS IoT Core publishes job information to the topics "$aws/things/**deviceID**/jobs/get/accepted" and/or "$aws/things/**deviceID**/jobs/get/rejected"
+6. AWS IoT Core publishes job information to the topics "$aws/things/*deviceID*/jobs/get/accepted" and/or "$aws/things/*deviceID*/jobs/get/rejected"
 
 ```
     {
@@ -55,17 +59,17 @@ This is our first option to view the pending jobs in the cloud that the device n
     }
 ```
 
-7. The device receives the payload from step 6 since it is subscribed to the "$aws/things/**deviceID**/jobs/get/accepted" and can view queued jobs and job information.
-    From here, we can determine the **jobID** that we must reference in execution step
+7. The device receives the payload from step 6 since it is subscribed to the "$aws/things/*deviceID*/jobs/get/accepted" and can view queued jobs and job information.
+    From here, we can determine the *jobID* that we must reference in execution step
 
 ## Option 2 -- DescribeJobExecution 
 ### info: https://docs.aws.amazon.com/iot/latest/developerguide/jobs-mqtt-api.html#mqtt-describejobexecution
 This is our second option to view the pending jobs in the cloud that the device needs to execute on.
 Unlike option 1, this option focuses only on the "next" job in the queue in FIFO operation (in order that the jobs were created)
 
-4. Device subscribes to "$aws/things/**deviceID**/jobs/$next/get/accepted" and "$aws/things/**deviceID**/jobs/$next/get/rejected"
+4. Device subscribes to "$aws/things/*deviceID*/jobs/$next/get/accepted" and "$aws/things/*deviceID*/jobs/$next/get/rejected"
 
-5. Device publishes to "$aws/things/**deviceID**/jobs/$next/get"
+5. Device publishes to "$aws/things/*deviceID*/jobs/$next/get"
 
 ```
     { 
@@ -75,7 +79,7 @@ Unlike option 1, this option focuses only on the "next" job in the queue in FIFO
     }
 ```
 
-6. AWS IoT Core publishes job information to the "$aws/things/**deviceID**/jobs/$next/get/accepted" and/or "$aws/things/**deviceID**/jobs/$next/get/rejected"
+6. AWS IoT Core publishes job information to the "$aws/things/*deviceID*/jobs/$next/get/accepted" and/or "$aws/things/*deviceID*/jobs/$next/get/rejected"
 
 ```
     {
@@ -100,22 +104,22 @@ Unlike option 1, this option focuses only on the "next" job in the queue in FIFO
 ### info: https://docs.aws.amazon.com/iot/latest/developerguide/jobs-mqtt-api.html#mqtt-startnextpendingjobexecution
 This step lets the cloud know that we are executing the job at the device level.
 
-8. Device subscribes to $aws/things/**deviceID**/jobs/start-next/accepted
+8. Device subscribes to $aws/things/*deviceID*/jobs/start-next/accepted
 
-9. Device publishes message to $aws/things/**deviceID**/jobs/start-next
+9. Device publishes message to $aws/things/*deviceID*/jobs/start-next
 
 ```
     { 
-        "statusDetails": { // A collection of name-value pairs that describe the status of the job execution.
+        "statusDetails": {
             "string": "job-execution-state"
             ...
         },
-        "stepTimeoutInMinutes": long, // Specifies the amount of time this device has to finish execution of this job (in minutes).
-        "clientToken": "string" // A client token used to correlate requests and responses. Enter an arbitrary value here and it is reflected in the response.
+        "stepTimeoutInMinutes": long, 
+        "clientToken": "string"
     }
 ```
 
-10. AWS IoT Core publishes the following information to $aws/things/**deviceID**/jobs/start-next/accepted
+10. AWS IoT Core publishes the following information to $aws/things/*deviceID*/jobs/start-next/accepted
     This information includes the information stored in the jobDocument which can include information about html link to updated software rev, 
     commands to reboot the device, etc.
 
@@ -151,26 +155,40 @@ This step lets the cloud know that we are executing the job at the device level.
 ### info: https://docs.aws.amazon.com/iot/latest/developerguide/jobs-mqtt-api.html#mqtt-updatejobexecution
 Once the job is completed on the device side, we must now confirm with the cloud that the device has completed the job.
 
-13. Device subscribes to $aws/things/**deviceID**/jobs/**jobID**/update/accepted
+13. Device subscribes to "$aws/things/*deviceID*/jobs/*jobID*/update/accepted"
 
-14. Device publishes to $aws/things/**deviceID**/jobs/**jobID**/update
+14. Device publishes to "$aws/things/*deviceID*/jobs/*jobID*/update"
 
 ```
     {
-        "status": "job-execution-state", // The new status for the job execution (IN_PROGRESS, FAILED, SUCCEEDED, or REJECTED). This must be specified on every update
-        "statusDetails": {  // A collection of name-value pairs that describe the status of the job execution. If not specified, the statusDetails are unchanged.
+        "status": "job-execution-state",
+        "statusDetails": {  
             "string": "string"
             ...
         },
-        "expectedVersion": "number", // The expected current version of the job execution. 
-        "executionNumber": long, // Optional. A number that identifies a job execution on a device. If not specified, the latest job execution is used.
-        "includeJobExecutionState": boolean, // Optional. When included and set to true, the response contains the JobExecutionState field. The default is false.
+        "expectedVersion": "number", 
+        "executionNumber": long, 
+        "includeJobExecutionState": boolean, 
         "includeJobDocument": boolean,
         "stepTimeoutInMinutes": long,
         "clientToken": "string"
     }
 ```
 
-15. AWS IoT Core publishes the timestamp of the update acceptance to $aws/things/**deviceID**/jobs/**jobID**/update/accepted
+15. AWS IoT Core publishes the timestamp of the update acceptance to $aws/things/*deviceID*/jobs/*jobID*/update/accepted
 
 16. The job is now complete.
+
+JOBS FILE
+
+{
+	"operation" : "install",
+	"version" : "1.0",
+	"packageName" : "install.py",
+	"autoStart" : "true",
+	"workingDirectory" : "/home/ec2-user/JobSampleTesting",
+	"files" : {
+		"fileName" : "install.py",
+		"url" : "${aws:iot:s3-presigned-url:https://s3.<region>.amazonaws.com/<bucket-Name>/<folder-name>/<key-name>}"
+	}
+}

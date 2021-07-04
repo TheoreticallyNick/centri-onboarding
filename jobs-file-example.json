@@ -1,0 +1,11 @@
+{
+	"jobFileID": "logi-firmware-2-0",
+    "version": "1.0",
+    "operation": "install",
+	"packageName": "install.py",
+	"workingDirectory": "/home/ec2-user/JobSampleTesting",
+	"files": {
+		"fileName" : "install.py",
+		"url" : "${aws:iot:s3-presigned-url:https://s3.<region>.amazonaws.com/<bucket-Name>/<path>}"
+	}
+}
